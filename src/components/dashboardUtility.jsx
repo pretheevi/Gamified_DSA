@@ -72,7 +72,7 @@ export const ProblemRow = ({ problem, index, onClick }) => (
   >
     <div 
       className="col-span-6 md:col-span-5 font-medium text-indigo-700 hover:underline truncate"
-      onClick={() => onClick(problem.url)}
+      onClick={() => onClick(problem.url, problem.id)}
       title={problem.title}
     >
       {problem.title}
@@ -100,10 +100,14 @@ export const ProblemRow = ({ problem, index, onClick }) => (
 
 import { useState, useEffect } from "react";
 import { FaPlay, FaPause, FaRedo } from "react-icons/fa";
-
-export const DSATimer = () => {
+export const DSATimer = ({ 
+  running, 
+  setRunning, 
+  handleTotalTimeSpending,
+  currentProblemId,
+  timerStartTime
+}) => {
   const [seconds, setSeconds] = useState(0);
-  const [running, setRunning] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
 
   useEffect(() => {
@@ -122,6 +126,15 @@ export const DSATimer = () => {
     return `${mins}:${secs}`;
   };
 
+  const handleReset = () => {
+    if (currentProblemId && timerStartTime) {
+      const timeSpent = Math.floor((Date.now() - timerStartTime) / 1000);
+      handleTotalTimeSpending(currentProblemId, timeSpent);
+    }
+    setRunning(false);
+    setSeconds(0);
+  };
+
   return (
     <div 
       className={`fixed bottom-4 right-4 bg-indigo-600 text-white rounded-full px-4 py-2 shadow-lg z-50 flex items-center space-x-3 transition-all duration-200 ${isHovering ? 'scale-[1.03] shadow-xl' : ''}`}
@@ -130,31 +143,17 @@ export const DSATimer = () => {
     >
       <span className='font-mono text-lg font-medium'>{formatTime()}</span>
       <div className='flex space-x-2'>
-        {/* Play Button - Green */}
         <button
-          onClick={() => setRunning(true)}
-          className={`p-2 rounded-full transition-all duration-300 ${running ? 'bg-green-400/20' : 'hover:bg-green-400/30'} hover:scale-110`}
-          aria-label="Start"
-        >
-          <FaPlay className="text-green-300 hover:text-green-200" />
-        </button>
-        
-        {/* Pause Button - Yellow */}
-        <button
-          onClick={() => setRunning(false)}
-          className={`p-2 rounded-full transition-all duration-300 ${!running ? 'bg-yellow-400/20' : 'hover:bg-yellow-400/30'} hover:scale-110`}
+          onClick={() => setRunning(prev => !prev)}
+          className={`p-2 rounded-full transition-all duration-300 ${!running ? 'bg-yellow-400/20' : 'hover:bg-yellow-400/30'} hover:scale-110 cursor-pointer`}
           aria-label="Pause"
         >
-          <FaPause className="text-yellow-300 hover:text-yellow-200" />
+          {running ? <FaPause className="text-yellow-300 hover:text-yellow-200" /> : <FaPlay className="text-yellow-300 hover:text-yellow-200" />}
         </button>
         
-        {/* Reset Button - Red */}
         <button
-          onClick={() => {
-            setRunning(false);
-            setSeconds(0);
-          }}
-          className="p-2 rounded-full transition-all duration-300 hover:bg-red-400/30 hover:scale-110"
+          onClick={handleReset}
+          className="p-2 rounded-full transition-all duration-300 hover:bg-red-400/30 hover:scale-110 cursor-pointer"
           aria-label="Reset"
         >
           <FaRedo className="text-red-300 hover:text-red-200" />
@@ -163,4 +162,3 @@ export const DSATimer = () => {
     </div>
   );
 };
-

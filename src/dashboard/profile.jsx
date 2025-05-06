@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from "react-router-dom";
-import { FaUser, FaCamera, FaTrophy, FaStar, FaEdit, FaArrowLeft, FaSave } from 'react-icons/fa';
+import { FaUser, FaCamera, FaTrophy, FaStar, FaEdit, FaArrowLeft, FaSave, FaSignOutAlt } from 'react-icons/fa';
 import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -33,18 +34,22 @@ const ProfilePage = () => {
     fileInputRef.current.click();
   };
 
+  const handleLogout = () => {
+    alert('You sure you want to logout?')
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-2 sm:p-3">
-      <div className="w-full max-w-3xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-6">
+      <div className="w-full max-w-4xl mx-auto">
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-100"
+          className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-200"
         >
           {/* Header */}
-          <div className="bg-gradient-to-r from-indigo-500 to-purple-500 p-2 sm:p-3 text-white">
-            <div className="flex items-center gap-2">
+          <div className="bg-gradient-to-r from-indigo-500 to-purple-500 p-5 text-white">
+            <div className="flex items-center gap-4">
               <motion.button 
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
@@ -52,40 +57,40 @@ const ProfilePage = () => {
                 className="text-white hover:text-yellow-200 transition"
                 title="Back to Dashboard"
               >
-                <FaArrowLeft className="text-sm" />
+                <FaArrowLeft className="text-xl" />
               </motion.button>
-              <h1 className="text-sm font-bold">✨ Profile</h1>
+              <h1 className="text-2xl font-bold">✨ Profile</h1>
             </div>
-            <div className="flex flex-wrap items-center mt-1 text-xs">
-              <div className="flex items-center mr-2">
-                <FaTrophy className="text-yellow-300 mr-1" />
-                <span>Lvl {user.level}</span>
+            <div className="flex flex-wrap items-center mt-3 text-base">
+              <div className="flex items-center mr-4">
+                <FaTrophy className="text-yellow-300 mr-2 text-lg" />
+                <span>Level {user.level}</span>
               </div>
               <div className="flex items-center">
-                <span className="text-yellow-300 mr-1">🔥</span>
-                <span>{user.streak}d</span>
+                <span className="text-yellow-300 mr-2 text-lg">🔥</span>
+                <span>{user.streak} day streak</span>
               </div>
             </div>
           </div>
 
           {/* Content */}
-          <div className="p-2 sm:p-3">
-            <div className="flex flex-col md:flex-row gap-3">
+          <div className="p-6">
+            <div className="flex flex-col lg:flex-row gap-6">
               {/* Left Column - Avatar & XP */}
-              <div className="flex flex-col items-center md:w-1/3">
+              <div className="flex flex-col items-center lg:w-1/3">
                 <motion.div 
                   whileHover={{ scale: 1.03 }}
-                  className="relative w-14 h-14 sm:w-16 sm:h-16 bg-indigo-100 rounded-lg shadow-inner border-2 border-indigo-200 hover:border-indigo-300 cursor-pointer transition-all"
+                  className="relative w-28 h-28 bg-indigo-100 rounded-xl shadow-inner border-2 border-indigo-200 hover:border-indigo-300 cursor-pointer transition-all"
                 >
                   {previewImage ? (
                     <img 
                       src={previewImage} 
                       alt="Profile" 
-                      className="w-full h-full object-cover rounded-md"
+                      className="w-full h-full object-cover rounded-lg"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <FaUser className="text-indigo-400 text-2xl sm:text-3xl" />
+                      <FaUser className="text-indigo-400 text-4xl" />
                     </div>
                   )}
                   <input
@@ -98,19 +103,19 @@ const ProfilePage = () => {
                   <motion.div 
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
-                    className="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow-xs border border-indigo-200"
+                    className="absolute -bottom-2 -right-2 bg-white rounded-full p-2 shadow-sm border border-indigo-200"
                     onClick={triggerFileInput}
                   >
-                    <FaCamera className="text-indigo-500 text-[8px]" />
+                    <FaCamera className="text-indigo-500 text-sm" />
                   </motion.div>
                 </motion.div>
 
-                <div className="w-full bg-indigo-50 rounded-full p-1 mt-2">
-                  <div className="flex justify-between text-[9px] text-indigo-700">
+                <div className="w-full bg-indigo-50 rounded-full p-2 mt-4">
+                  <div className="flex justify-between text-sm text-indigo-700 font-medium">
                     <span>{user.xp} XP</span>
-                    <span>Lvl {user.level}</span>
+                    <span>Level {user.level}</span>
                   </div>
-                  <div className="h-1.5 bg-indigo-200 rounded-full overflow-hidden mt-0.5">
+                  <div className="h-2.5 bg-indigo-200 rounded-full overflow-hidden mt-2">
                     <motion.div 
                       initial={{ width: 0 }}
                       animate={{ width: `${Math.min(100, (user.xp % 1000) / 10)}%` }}
@@ -119,71 +124,83 @@ const ProfilePage = () => {
                     />
                   </div>
                 </div>
+
+                <div className='w-full'>
+                  <motion.button 
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => navigate('/')}
+                    className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-semibold py-3 rounded-xl shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-3 text-base"
+                  >
+                    <FaSignOutAlt className="text-base" />
+                    Logout
+                  </motion.button>
+                </div>
               </div>
 
               {/* Right Column - Info & Achievements */}
-              <div className="flex-1 space-y-2">
-                <div className="bg-indigo-50 rounded-lg p-2 space-y-2">
-                  <h2 className="text-xs font-semibold text-indigo-800 flex items-center">
-                    <FaUser className="mr-1 text-[10px]" />
-                    Details
+              <div className="flex-1 space-y-4">
+                <div className="bg-indigo-50 rounded-xl p-4 space-y-4">
+                  <h2 className="text-lg font-semibold text-indigo-800 flex items-center">
+                    <FaUser className="mr-3 text-base" />
+                    Profile Details
                   </h2>
 
                   <div>
-                    <label className="block text-[9px] text-indigo-600">Username</label>
+                    <label className="block text-sm text-indigo-600 mb-2 font-medium">Username</label>
                     <div className="flex items-center">
                       <input
                         type="text"
                         value={user.name}
                         onChange={(e) => setUser({ ...user, name: e.target.value })}
-                        className="bg-white border border-indigo-200 rounded-md px-2 py-1 w-full focus:outline-none focus:ring-1 focus:ring-indigo-300 text-xs"
+                        className="bg-white border border-indigo-200 rounded-xl px-4 py-2.5 w-full focus:outline-none focus:ring-2 focus:ring-indigo-300 text-base"
                       />
-                      <button className="ml-1 text-indigo-600 hover:text-indigo-800 text-xs">
+                      <button className="ml-3 text-indigo-600 hover:text-indigo-800 text-lg">
                         <FaEdit />
                       </button>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-[9px] text-indigo-600">Email</label>
-                    <div className="bg-white border border-indigo-200 rounded-md px-2 py-1 text-xs">
+                    <label className="block text-sm text-indigo-600 mb-2 font-medium">Email</label>
+                    <div className="bg-white border border-indigo-200 rounded-xl px-4 py-2.5 text-base">
                       {user.email}
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-indigo-50 rounded-lg p-2">
-                  <h2 className="text-xs font-semibold text-indigo-800 flex items-center mb-1">
-                    <FaStar className="text-yellow-400 mr-1 text-[10px]" />
-                    Achievements
+                <div className="bg-indigo-50 rounded-xl p-4">
+                  <h2 className="text-lg font-semibold text-indigo-800 flex items-center mb-3">
+                    <FaStar className="text-yellow-400 mr-3 text-base" />
+                    Your Achievements
                   </h2>
-                  <div className="grid grid-cols-3 gap-1">
+                  <div className="grid grid-cols-3 gap-3">
                     {[...Array(user.achievements)].map((_, i) => (
                       <motion.div 
-                        whileHover={{ y: -2 }}
+                        whileHover={{ y: -3 }}
                         key={i} 
-                        className="bg-yellow-100 border border-yellow-300 rounded-sm p-1 flex flex-col items-center"
+                        className="bg-yellow-100 border border-yellow-300 rounded-lg p-3 flex flex-col items-center"
                       >
-                        <FaStar className="text-yellow-500 text-xs mb-0.5" />
-                        <span className="text-[8px] font-medium">Done</span>
+                        <FaStar className="text-yellow-500 text-lg mb-1.5" />
+                        <span className="text-sm font-medium">Completed</span>
                       </motion.div>
                     ))}
                     {[...Array(6 - user.achievements)].map((_, i) => (
-                      <div key={i} className="bg-gray-100 border border-gray-200 rounded-sm p-1 flex flex-col items-center opacity-50">
-                        <FaStar className="text-gray-400 text-xs mb-0.5" />
-                        <span className="text-[8px] font-medium">Locked</span>
+                      <div key={i} className="bg-gray-100 border border-gray-200 rounded-lg p-3 flex flex-col items-center opacity-50">
+                        <FaStar className="text-gray-400 text-lg mb-1.5" />
+                        <span className="text-sm font-medium">Locked</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 <motion.button 
-                  whileHover={{ scale: 1.01 }}
-                  whileTap={{ scale: 0.99 }}
-                  className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-medium py-1.5 rounded-md shadow-xs hover:shadow-sm transition-all flex items-center justify-center gap-1 text-xs"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-semibold py-3 rounded-xl shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-3 text-base"
                 >
-                  <FaSave className="text-xs" />
-                  Save
+                  <FaSave className="text-base" />
+                  Save Profile Changes
                 </motion.button>
               </div>
             </div>

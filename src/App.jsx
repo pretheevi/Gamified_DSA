@@ -4,6 +4,7 @@ import Dashboard from "./dashboard/dashboard";
 import LoginRegisterPage from "./authentication/auth";
 import RegistrationFlow from "./authentication/Register";
 import ProfilePage from "./dashboard/profile";
+import { Toaster } from 'sonner';
 
 /**
  * Main App component for DSA Quest dashboard
@@ -24,6 +25,7 @@ function App() {
           <Route path="/profile" element={<ProfilePage />} />     
         </Routes>
       </BrowserRouter>
+      <Toaster position="top-center" richColors />
     </>
   );
 }

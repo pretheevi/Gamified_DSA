@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
-import Login from './login';
+import Login from './Login';
 
 
 
@@ -11,6 +11,7 @@ const AuthPage = () => {
     email: '',
     password: ''
   });
+  const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState('');
 
@@ -53,6 +54,7 @@ const AuthPage = () => {
     if (!validateForm()) return;
 
     try {
+      setLoading(true);
       const response = await api.post('/auth/login', {
         email: formData.email,
         password: formData.password
@@ -63,6 +65,8 @@ const AuthPage = () => {
       const errorMessage = error.response?.data?.message || "Invalid email or password. Please try again.";
       setApiError(errorMessage);
       console.error("Login error:", error.response?.data || error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -74,6 +78,7 @@ const AuthPage = () => {
         handleSubmit={handleSubmit}
         errors={errors}
         apiError={apiError}
+        loading={loading}
       />
     </div>
   );

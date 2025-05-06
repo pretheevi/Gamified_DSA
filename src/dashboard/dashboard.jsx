@@ -1,22 +1,30 @@
-import { useEffect, useState, useMemo, useRef, } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaTrophy, FaUser, FaCode, FaCheckCircle, FaSpinner, FaClipboardList, FaCheck } from 'react-icons/fa';
+import { FaTrophy, FaUser, FaCode, FaCheck, FaSpinner, FaClipboardList } from 'react-icons/fa';
 import api from '../api/axios'; 
 import { StatCard, ProblemRow, DSATimer } from '../components/dashboardUtility';
-
+import { toast } from 'sonner';
 
 /**
- * Main App component for DSA Quest dashboard
- * Displays a list of coding problems with stats and progress tracking
+ * Main Dashboard component for DSA Quest application
+ * Displays user statistics, problem list, and timer functionality
  */
 function Dashboard() {
   const navigate = useNavigate();
+  
+  // State management
   const [problems, setProblems] = useState([]);
+  const [originalProblems, setOriginalProblems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+  const [timerError, setTimerError] = useState(false);
+  const [running, setRunning] = useState(false);
+  const [currentProblemId, setCurrentProblemId] = useState(null);
+  const [timerStartTime, setTimerStartTime] = useState(null);
+  const [difficultySort, setDifficultySort] = useState("all");
+  const [previewImage, setPreviewImage] = useState(null);
 
-  // Calculate derived stats using useMemo
+  // Derived stats using useMemo for performance optimization
   const { totalXP, solvedCount, inProgressCount, todoCount } = useMemo(() => ({
     totalXP: problems.reduce((sum, problem) => problem.status === 'Completed' ? sum + (problem.xp_value || 0) : sum, 0),
     solvedCount: problems.filter(p => p.status === 'Completed').length,
@@ -25,18 +33,17 @@ function Dashboard() {
   }), [problems]);
 
   /**
-   * Fetches problems data from the API
+   * Fetches problems data from API
    */
   const fetchProblems = async () => {
     try {
       setIsLoading(true);
       const response = await api.get('/home/problems');
       console.log('Fetched problems:', response.data);
-      const data = response.data
-      setProblems(data);
-      setOriginalProblems(data);
+      setProblems(response.data);
+      setOriginalProblems(response.data);
     } catch (err) {
-      console.log('Error fetching problems:', err);
+      console.error('Error fetching problems:', err);
       setError('Failed to load problems. Please try again later.');
     } finally {
       setIsLoading(false);
@@ -48,63 +55,132 @@ function Dashboard() {
     fetchProblems();
   }, []);
 
-
+  /**
+   * Sorts problems by difficulty
+   * @returns {Object} Problems grouped by difficulty
+   */
   const sortedProblems = () => {
-    let sorted_object = { 'Easy': [], 'Medium': [], 'Hard': [] };
+    const sortedObject = { 'Easy': [], 'Medium': [], 'Hard': [] };
     problems.forEach((problem) => {
-      const difficulty = problem.difficulty;
-      if (sorted_object[difficulty]) {
-        sorted_object[difficulty].push(problem);
+      if (sortedObject[problem.difficulty]) {
+        sortedObject[problem.difficulty].push(problem);
       }
     });
-    return sorted_object;
+    return sortedObject;
   };
   
-
-  const [difficultySort, setDifficultySort] = useState("all");
-  const [originalProblems , setOriginalProblems] = useState([]);
-
+  /**
+   * Handles difficulty filter change
+   * @param {Object} event - The change event
+   */
   const handleDifficultyChange = (event) => {
     const value = event.target.value;
-    if (value === difficultySort) return; // No change in selection
+    if (value === difficultySort) return;
     setDifficultySort(value);
   }
   
+  // Effect to handle problem sorting when difficulty filter changes
   useEffect(() => {
     if (!difficultySort || difficultySort === "all") {
-      setProblems(originalProblems); // Reset to default if needed
+      setProblems(originalProblems);
       return;
     }
   
-    const sorted_object = sortedProblems(); // should return an object with keys: easy, medium, hard
-    console.log("Sorted object:", sorted_object);
-    let new_sorted_array = [];
+    const sortedObject = sortedProblems();
+    console.log("Sorted object:", sortedObject);
+    let newSortedArray = [];
   
     if (difficultySort === "Easy") {
-      new_sorted_array = [...sorted_object['Easy'], ...sorted_object['Medium'], ...sorted_object['Hard']];
+      newSortedArray = [...sortedObject['Easy'], ...sortedObject['Medium'], ...sortedObject['Hard']];
     } else if (difficultySort === "Medium") {
-      new_sorted_array = [...sorted_object['Medium'], ...sorted_object['Easy'], ...sorted_object['Hard']];
+      newSortedArray = [...sortedObject['Medium'], ...sortedObject['Easy'], ...sortedObject['Hard']];
     } else if (difficultySort === "Hard") {
-      new_sorted_array = [...sorted_object['Hard'], ...sorted_object['Easy'], ...sorted_object['Medium']];
+      newSortedArray = [...sortedObject['Hard'], ...sortedObject['Easy'], ...sortedObject['Medium']];
     }
-    setProblems(new_sorted_array);
-  }, [difficultySort]);
-  
+    
+    setProblems(newSortedArray);
+  }, [difficultySort, originalProblems]);
 
   /**
-   * Handles clicking on a problem to open it in a new tab
-   * @param {string} url - The URL of the problem to open
+   * Handles problem click - opens problem in new tab if timer is running
+   * @param {string} url - Problem URL
+   * @param {string} problemId - Problem ID
    */
-  const handleProblemClick = (url) => {
-    window.open(url, '_blank', 'noopener,noreferrer');
+  const handleProblemClick = (url, problemId) => {
+    if (!running) {
+      const errorMsg = '⏱️ Timer is not running. Please start the timer first.';
+      setTimerError(true);
+      toast.error(errorMsg);
+      return;
+    }
+
+    if (running || !running) {
+      if (currentProblemId && problemId !== currentProblemId) {
+        toast.error("reset the timer before start next problem.");
+        setTimerError(true);
+        return;
+      }
+    } 
+
+    if (!currentProblemId) {
+      setTimerError(false);
+      setCurrentProblemId(problemId);
+      setTimerStartTime(Date.now());
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
   };
-  const [previewImage, setPreviewImage] = useState(null);
+
+  /**
+   * Sends time spent on problem to the server
+   * @param {string} problemId - Problem ID
+   * @param {number} seconds - Time spent in seconds
+   */
+  const sendTimeData = async (problemId, seconds) => {
+    if (!problemId || !seconds) return;
+    
+    try {
+      const response = await api.post(`/home/updateTime/${problemId}`, { 
+        time: seconds 
+      });
+      console.log('Time recorded:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error recording time:", error);
+      throw error;
+    } finally {
+      setCurrentProblemId(null)
+    }
+  };
+
+  useEffect(() => {
+    const handleBeforeUnload = async (e) => {
+      if (running && currentProblemId && timerStartTime) {
+        const timeSpent = Math.floor((Date.now() - timerStartTime) / 1000);
+        if (timeSpent > 0) {
+          await sendTimeData(currentProblemId, timeSpent);
+        }
+        // Clear state (not super useful here since page is closing,
+        // but still consistent logic-wise)
+        setTimerStartTime(null);
+        setCurrentProblemId(null);
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [running, currentProblemId, timerStartTime]);
+
 
   // Loading state
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="animate-pulse text-2xl text-indigo-800">Loading your DSA quest...</div>
+        <div className="animate-pulse text-2xl text-indigo-800">
+          Loading your DSA quest...
+        </div>
       </div>
     );
   }
@@ -128,9 +204,15 @@ function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4 md:p-6">
-      {/* Timer */}
+      {/* Timer Section */}
       <div>
-        <DSATimer />
+        <DSATimer 
+          running={running}
+          setRunning={setRunning}
+          currentProblemId={currentProblemId}
+          timerStartTime={timerStartTime}
+          handleTotalTimeSpending={sendTimeData}
+        />
       </div>
 
       <div className="max-w-4xl mx-auto">
@@ -157,7 +239,7 @@ function Dashboard() {
           </div>
         </header>
 
-        {/* Summary Card - Enhanced */}
+        {/* Summary Card */}
         <section className="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-2xl shadow-lg mb-8 border border-indigo-100">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-center sm:text-left">
@@ -166,7 +248,7 @@ function Dashboard() {
                 Total Problems: {problems.length}
               </h2>
               <p className="text-indigo-600 font-medium">
-                {problems.length > 10 ? "You're crushing it!" : "Keep up the great work!"}
+                {solvedCount.length > 10 ? "You're crushing it!" : "Keep up the great work!"}
               </p>
             </div>
             <div className="relative">
@@ -181,55 +263,69 @@ function Dashboard() {
           </div>
         </section>
 
-        {/* Stats Grid - Enhanced */}
-        
-      {/* Stats Grid */}
-      <section className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-        <StatCard 
-          value={solvedCount}
-          label="Solved"
-          icon={<FaCheck className="text-green-500" />}
-          bgColor="bg-green-50"
-          borderColor="border-green-300"
-          hoverEffect="hover:shadow-green-300"
-          valueColor="text-green-600"
-        />
-        <StatCard 
-          value={inProgressCount}
-          label="In Progress"
-          icon={<FaSpinner className="text-yellow-500 animate-spin" />}
-          bgColor="bg-yellow-50"
-          borderColor="border-yellow-200"
-          hoverEffect="hover:shadow-yellow-100"
-        />
-        <StatCard 
-          value={todoCount}
-          label="To Do"
-          icon={<FaClipboardList className="text-indigo-500" />}
-          bgColor="bg-indigo-50"
-          borderColor="border-indigo-200"
-          hoverEffect="hover:shadow-indigo-100"
-        />
-      </section>
+        {/* Stats Grid */}
+        <section className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+          <StatCard 
+            value={solvedCount}
+            label="Solved"
+            icon={<FaCheck className="text-green-500" />}
+            bgColor="bg-green-50"
+            borderColor="border-green-300"
+            hoverEffect="hover:shadow-green-300"
+            valueColor="text-green-600"
+          />
+          <StatCard 
+            value={inProgressCount}
+            label="In Progress"
+            icon={<FaSpinner className="text-yellow-500 animate-spin" />}
+            bgColor="bg-yellow-50"
+            borderColor="border-yellow-200"
+            hoverEffect="hover:shadow-yellow-100"
+          />
+          <StatCard 
+            value={todoCount}
+            label="To Do"
+            icon={<FaClipboardList className="text-indigo-500" />}
+            bgColor="bg-indigo-50"
+            borderColor="border-indigo-200"
+            hoverEffect="hover:shadow-indigo-100"
+          />
+        </section>
 
         {/* Sorting Section */}
         <section>
           <h2 className="text-xl font-bold text-indigo-800 mb-4">Sort Problems</h2>
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-full sm:w-auto">
+            <div className="w-full sm:w-auto gap-4 flex flex-row justify-between">
+              
               <select
-                  id="difficulty"
-                  name="difficulty"
-                  className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                  onChange={(e) => handleDifficultyChange(e)} // handle change
-                >
-                  <option value="">All</option>
-                  <option value="Easy">Easy First</option>
-                  <option value="Medium">Medium First</option>
-                  <option value="Hard">Hard First</option>
-                </select>
-              </div>
+                id="difficulty"
+                name="difficulty"
+                className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                onChange={handleDifficultyChange}
+              >
+                <option value="" disabled>By Difficulty</option>
+                <option value="">All</option>
+                <option value="Easy">Easy First</option>
+                <option value="Medium">Medium First</option>
+                <option value="Hard">Hard First</option>
+              </select>
+
+              <select
+                id="difficulty"
+                name="difficulty"
+                className="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                onChange={handleDifficultyChange}
+              >
+                <option value="" disabled>By Topic</option>
+                <option value="">All</option>
+                <option value="Array">Array</option>
+                <option value="Medium">Medium First</option>
+                <option value="Hard">Hard First</option>
+              </select>
+
             </div>
+          </div>
         </section>
 
         {/* Problems Table */}
@@ -246,7 +342,7 @@ function Dashboard() {
           {problems.length > 0 ? (
             problems.map((problem, index) => (
               <ProblemRow 
-                key={problem.id || index}
+                key={problem.id}
                 problem={problem}
                 index={index}
                 onClick={handleProblemClick}
@@ -262,6 +358,5 @@ function Dashboard() {
     </div>
   );
 }
-
 
 export default Dashboard;
