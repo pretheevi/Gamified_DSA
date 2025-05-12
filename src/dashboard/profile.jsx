@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from "react-router-dom";
-import { FaUser, FaCamera, FaTrophy, FaStar, FaEdit, FaArrowLeft, FaSave, FaSignOutAlt } from 'react-icons/fa';
+import { FaUser, FaCamera, FaTrophy, FaStar, FaEdit, FaArrowLeft, FaSave, FaSignOutAlt, FaInfoCircle } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 
@@ -41,6 +41,25 @@ const ProfilePage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-6">
       <div className="w-full max-w-4xl mx-auto">
+        {/* Development Notice */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded-r-lg shadow-sm"
+        >
+          <div className="flex items-start">
+            <FaInfoCircle className="text-yellow-500 text-xl mr-3 mt-0.5 flex-shrink-0" />
+            <div>
+              <h3 className="font-medium text-yellow-800">Profile Under Development</h3>
+              <p className="text-yellow-700 text-sm mt-1">
+                This profile page is still in development. The data shown is static and for demonstration purposes only. 
+                We'll be adding real user data and functionality soon!
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -129,7 +148,7 @@ const ProfilePage = () => {
                   <motion.button 
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => navigate('/')}
+                    onClick={handleLogout}
                     className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-semibold py-3 rounded-xl shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-3 text-base"
                   >
                     <FaSignOutAlt className="text-base" />
