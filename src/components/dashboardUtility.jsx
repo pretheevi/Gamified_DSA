@@ -14,7 +14,7 @@ export const getDifficultyColor = (difficulty) => {
 
 export const getStatusIcon = (status) => {
   switch (status) {
-    case 'Completed': return <FaCheckCircle className="text-green-500" />;
+    case 'Solved': return <FaCheckCircle className="text-green-500" />;
     case 'In Progress': return <FaFire className="text-orange-500" />;
     default: return <FaLock className="text-gray-400" />;
   }
@@ -64,15 +64,15 @@ export const StatCard = ({
  * @param {number} props.index - The index of the problem in the list
  * @param {function} props.onClick - Click handler for the problem
  */
-export const ProblemRow = ({ problem, index, onClick }) => (
+export const ProblemRow = ({ problem, index, onClick, setStatusSolved }) => (
   <div 
-    className={`grid grid-cols-12 items-center p-4 border-b border-gray-100 hover:bg-indigo-50 transition-colors cursor-pointer ${
+    className={`grid grid-cols-12 items-center p-4 border-b border-gray-100 hover:bg-indigo-50 transition-colors ${
       index % 2 === 0 ? 'bg-gray-50' : 'bg-white'
     }`}
   >
     <div 
-      className="col-span-6 md:col-span-5 font-medium text-indigo-700 hover:underline truncate"
-      onClick={() => onClick(problem.url, problem.id)}
+      className="col-span-6 md:col-span-5 font-medium text-indigo-700 hover:underline truncate cursor-pointer"
+      onClick={() => onClick(problem.url, problem.id, problem.status)}
       title={problem.title}
     >
       {problem.title}
@@ -87,7 +87,12 @@ export const ProblemRow = ({ problem, index, onClick }) => (
         {problem.difficulty}
       </span>
     </div>
-    <div className="col-span-3 md:col-span-1 flex justify-center">
+    <div
+        onClick={(e) => {
+          e.stopPropagation();
+          setStatusSolved(problem);
+        }} 
+      className="col-span-3 md:col-span-1 flex justify-center cursor-pointer">
       {getStatusIcon(problem.status)}
     </div>
   </div>
@@ -103,9 +108,8 @@ import { FaPlay, FaPause, FaRedo } from "react-icons/fa";
 export const DSATimer = ({ 
   running, 
   setRunning, 
-  handleTotalTimeSpending,
-  currentProblemId,
-  timerStartTime
+  sendTimeData,
+  currentProblemClicked
 }) => {
   const [seconds, setSeconds] = useState(0);
   const [isHovering, setIsHovering] = useState(false);
@@ -127,9 +131,12 @@ export const DSATimer = ({
   };
 
   const handleReset = () => {
-    if (currentProblemId && timerStartTime) {
-      const timeSpent = Math.floor((Date.now() - timerStartTime) / 1000);
-      handleTotalTimeSpending(currentProblemId, timeSpent);
+    if (currentProblemClicked["problemId"] && currentProblemClicked["seconds"]) {
+      console.log("timer Reset")
+      setRunning(false);
+      setSeconds(0);
+      sendTimeData();
+      return
     }
     setRunning(false);
     setSeconds(0);
