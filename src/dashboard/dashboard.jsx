@@ -46,7 +46,7 @@ function Dashboard() {
   const fetchProblems = async () => {
     try {
       setIsLoading(true);
-      const response = await api.get('/home/problems');
+      const response = await api.get('/home/problems/');
       setProblems(response.data);
       setOriginalProblems(response.data);
     } catch (err) {
@@ -58,10 +58,18 @@ function Dashboard() {
     }
   };
 
-  // Fetch problems on component mount
   useEffect(() => {
-    fetchProblems();
+    const interval = setInterval(() => {
+      const token = localStorage.getItem("access_token");
+      if (token) {
+        clearInterval(interval);
+        fetchProblems();
+      }
+    }, 200); // Check every 200ms
+
+    return () => clearInterval(interval); // cleanup
   }, []);
+
 
   /**
    * Handles filter changes
