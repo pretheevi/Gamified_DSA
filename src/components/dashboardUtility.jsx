@@ -65,23 +65,23 @@ export const StatCard = ({
  * @param {function} props.onClick - Click handler for the problem
  */
 export const ProblemRow = ({ problem, index, onClick, setStatusSolved }) => (
-  <div 
+  <div
     className={`grid grid-cols-12 items-center p-4 border-b border-gray-100 hover:bg-indigo-50 transition-colors ${
       index % 2 === 0 ? 'bg-gray-50' : 'bg-white'
     }`}
   >
     <div 
-      className="col-span-6 md:col-span-5 font-medium text-indigo-700 hover:underline truncate cursor-pointer"
+      className="col-span-6 md:col-span-5 font-medium text-indigo-700 hover:underline truncate cursor-pointer select-none"
       onClick={() => onClick(problem.url, problem.id, problem.status)}
       title={problem.title}
     >
       {problem.title}
     </div>
-    <div className="col-span-4 hidden md:block text-gray-600 truncate" title={problem.topic}>
+    <div className="col-span-4 hidden md:block text-gray-600 truncate select-none" title={problem.topic}>
       {problem.topic}
     </div>
     <div className="col-span-3 md:col-span-2">
-      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+      <span className={`px-3 py-1 rounded-full text-xs font-semibold select-none ${
         getDifficultyColor(problem.difficulty)
       }`}>
         {problem.difficulty}
@@ -92,7 +92,7 @@ export const ProblemRow = ({ problem, index, onClick, setStatusSolved }) => (
           e.stopPropagation();
           setStatusSolved(problem);
         }} 
-      className="col-span-3 md:col-span-1 flex justify-center cursor-pointer">
+      className="col-span-3 md:col-span-1 flex justify-center cursor-pointer select-none">
       {getStatusIcon(problem.status)}
     </div>
   </div>
